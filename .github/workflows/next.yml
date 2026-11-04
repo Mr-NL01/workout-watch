@@ -1,0 +1,29 @@
+name: Move next.workout
+# Nightly: point w/next.workout at the first workout dated today or later
+# (Europe/Amsterdam). Also runs when the workout index changes, or by hand.
+on:
+  schedule:
+    - cron: "17 1 * * *"
+  push:
+    branches: [main]
+    paths: ["w/index.json"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: next-workout
+  cancel-in-progress: false
+jobs:
+  next:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/build.py next
+      - name: Commit if next.workout changed
+        run: |
+          git add w/next.workout w/next.json 2>/dev/null || true
+          if git diff --cached --quiet; then echo "next.workout unchanged"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "next.workout: $(python3 -c 'import json;print(json.load(open("w/next.json"))["title"])')"
+          git push
