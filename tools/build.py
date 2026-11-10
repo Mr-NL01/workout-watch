@@ -37,9 +37,14 @@ def pace_s(p):
     return int(m) * 60 + int(s)
 
 
+HR_FLOOR = 60  # warm-ups: HR ceiling only; Apple has no max-only alert, so a range from 60 up to the max
+
+
 def to_alert(a, step_s=None):
     if not a:
         return None
+    if a.get("hr_max"):
+        return alert_heart_rate(HR_FLOOR, a["hr_max"])
     if a.get("hr"):
         return alert_heart_rate(a["hr"][0], a["hr"][1])
     if a.get("pace") and not (step_s and step_s < 120):
